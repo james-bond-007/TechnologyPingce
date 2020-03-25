@@ -121,7 +121,7 @@ def copydata(book, root, name, myrownum):
                 sheet.row(myrownum[int(sheetName)]).write(i+1, row[i])
             myrownum[int(sheetName)] += 1
 
-def huizong():
+def huizong1():
     # 获取文件名
     documnetNames = wblist()
     # 新建workbook
@@ -144,6 +144,34 @@ def huizong():
     '''
     inMessage = 'total'
     book.save('{}.xls'.format(inMessage))
+
+def huizong(filename='./total.xlsx'):
+    print('分析目录')
+    files = wblist()
+    pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
+    df = {}
+    for i in pindao:
+        df[i] = pd.DataFrame()
+    for file in files:
+        name = file[1]
+        ndate = name.split('-')[2]
+        ndate = ndate.split('.')
+        ndate = '2020/{}/{}'.format(ndate[0], ndate[1])
+        sheetName = int(name.split('-')[0]) - 1
+        data = pd.read_excel(os.path.join(file[0], name))
+        data.insert(0, '日期', ndate)
+        if df[pindao[sheetName]].empty:
+            df[pindao[sheetName]] = data
+        else:
+            df[pindao[sheetName]] = pd.concat([df[pindao[sheetName]], data])
+        print(file[1])
+    total_number = {}
+    with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
+        for i in pindao:
+            print('正在写入:{}表'.format(i))
+            df[i].to_excel(writer, sheet_name=i, index=False)
+            total_number[i] = df[i].shape[0]
+    print('各频道节目条数：{}'.format(total_number))
 
 def programefilter(df):
     #df = pd.read_excel('total.xls')
@@ -173,7 +201,7 @@ def cleardata(file='filter.xlsx'):
         pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
         rownumber = {}
         for i in pindao:
-            print('正在处理:{}'.format(i))
+            print('正在整理:{}'.format(i))
             df = pd.read_excel('total.xls', i,)
             df, xdf = programefilter(df)
             rownumber[i] = df.shape[0]
@@ -218,7 +246,7 @@ def readtoPD(file='filter.xlsx'):
     result.rename(columns={'主视源': '来源', '磁带条码': '责任人'}, inplace=True)
     return result
 
-def writetoEx(myData, file='result.xlsx', bDayin=False):
+def writetoEx1(myData, file='result.xlsx', bPrint=False):
     #写入精选表
     # Create a Pandas Excel writer using XlsxWriter as the engine.
     with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
@@ -309,7 +337,7 @@ def writetoEx(myData, file='result.xlsx', bDayin=False):
             'text_wrap': 1,  # 自动换行，可在文本中加 '\n'来控制换行的位置
             # 'num_format': 'yyyy-mm-dd'  # 设定格式为日期格式，如：2017-07-01
         })
-        if bDayin:
+        if bPrint:
             header_format.set_font_color('black')
             header_format.set_fg_color('white')
             header_format.set_border_color('black')
@@ -352,6 +380,140 @@ def writetoEx(myData, file='result.xlsx', bDayin=False):
                 worksheet.write(i+1, j+1, value, datastyle)
                 pass
 
+def writetoEx(myData, file='result.xlsx', bPrint=False):
+    
+    #写入精选表
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
+        # Convert the dataframe to an XlsxWriter Excel object. Note that we turn off
+        # the default header and skip one row to allow us to insert a user defined
+        # header.
+        myData.to_excel(writer, sheet_name="精选", startrow=0, na_rep='')
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['精选']
+        #加序列号
+        worksheet.write(0, 0, '序号')
+
+        #worksheet = workbook.add_worksheet('Sheet1')
+
+        # Add a header format.
+        header_format = workbook.add_format({
+            'font_size':12,   #字体大小
+            'bold':1,   #是否粗体
+            'bg_color': '0f6f32', #表格背景颜色
+            'font_color': '#E2F3F6',   #字体颜色
+            'align':'center',  #对齐方式，left,center,rigth,top,vcenter,bottom,vjustify
+            'valign': 'vcenter',#垂直居中
+            'top':1,  #上边框，后面参数是线条宽度
+            'left':1, #左边框
+            'right':1, #右边框
+            'bottom':1, #底边框
+            'border_color': 'white',
+            'text_wrap':1,  #自动换行，可在文本中加 '\n'来控制换行的位置
+            #'num_format':'yyyy-mm-dd' #设定格式为日期格式，如：2017-07-01
+            })
+        index_format = workbook.add_format({
+            'font_size': 12,  # 字体大小
+            'bold': 0,  # 是否粗体
+            'bg_color': '#0f6f32', #表格背景颜色
+            'font_color': '#E2F3F6',   #字体颜色
+            'align': 'center',  # 对齐方式，left,center,rigth,top,vcenter,bottom,vjustify
+            'valign': 'vcenter',  # 垂直居中
+            'top': 1,  # 上边框，后面参数是线条宽度
+            'left': 1,  # 左边框
+            'right': 1,  # 右边框
+            'bottom': 1,  # 底边框
+            'border_color':'white',
+            'text_wrap': 1,  # 自动换行，可在文本中加 '\n'来控制换行的位置
+            # 'num_format':'yyyy-mm-dd' #设定格式为日期格式，如：2017-07-01
+        })
+        data_format = workbook.add_format({
+            'font_size': 11,  # 字体大小
+            'bold': 0,  # 是否粗体
+            'bg_color': '#319455', #表格背景颜色
+            'font_color': '#E2F3F6',   #字体颜色
+            'align': 'center',  # 对齐方式，left,center,rigth,top,vcenter,bottom,vjustify
+            'valign': 'vcenter',  # 垂直居中
+            'top': 1,  # 上边框，后面参数是线条宽度
+            'left': 1,  # 左边框
+            'right': 1,  # 右边框
+            'bottom': 1,  # 底边框
+            'border_color':'white',
+            'text_wrap': 1,  # 自动换行，可在文本中加 '\n'来控制换行的位置
+            #'num_format': 'yyyy-mm-dd'  # 设定格式为日期格式，如：2017-07-01
+            })
+        data2_format = workbook.add_format({
+            'font_size': 11,  # 字体大小
+            'bold': 0,  # 是否粗体
+            'bg_color': '#54B58A', #表格背景颜色
+            'font_color': '#E2F3F6',   #字体颜色
+            'align': 'center',  # 对齐方式，left,center,rigth,top,vcenter,bottom,vjustify
+            'valign': 'vcenter',  # 垂直居中
+            'top': 1,  # 上边框，后面参数是线条宽度
+            'left': 1,  # 左边框
+            'right': 1,  # 右边框
+            'bottom': 1,  # 底边框
+            'border_color':'white',
+            'text_wrap': 1,  # 自动换行，可在文本中加 '\n'来控制换行的位置
+            # 'num_format': 'yyyy-mm-dd'  # 设定格式为日期格式，如：2017-07-01
+        })
+        defaul_format = workbook.add_format({
+            'font_size': 11,  # 字体大小
+            'bold': 0,  # 是否粗体
+            'bg_color': 'white',  # 表格背景颜色
+            'font_color': 'black',  # 字体颜色
+            'align': 'center',  # 对齐方式，left,center,rigth,top,vcenter,bottom,vjustify
+            'valign': 'vcenter',  # 垂直居中
+            'top': 0,  # 上边框，后面参数是线条宽度
+            'left': 0,  # 左边框
+            'right': 0,  # 右边框
+            'bottom': 0,  # 底边框
+            'text_wrap': 1,  # 自动换行，可在文本中加 '\n'来控制换行的位置
+            # 'num_format': 'yyyy-mm-dd'  # 设定格式为日期格式，如：2017-07-01
+        })
+        if bPrint:
+            header_format.set_font_color('black')
+            header_format.set_fg_color('white')
+            header_format.set_border_color('black')
+            index_format.set_font_color('black')
+            index_format.set_fg_color('white')
+            index_format.set_border_color('black')
+            data_format.set_font_color('black')
+            data_format.set_fg_color('white')
+            data_format.set_border_color('black')
+            data2_format.set_font_color('black')
+            data2_format.set_fg_color('white')
+            data2_format.set_border_color('black')
+
+        worksheet.write(0, 0, '序号',header_format)
+        # Write the column headers with the defined format.
+        colWidth = {'序号':4.54,'日期':10.21,'日期1':10.66,'频道':4.54,'节目名称':29.43,'期数':11.55,
+                    '长度':8.58,'来源':6.68,'责任人':6.68}
+        worksheet.set_column(0,0,colWidth['序号'])
+        for col_num, value in enumerate(myData.columns.values):
+            #colWidth = max(len(value), max(myData[value].astype(str).str.len()))+3
+            #print(colWidth)
+            worksheet.set_column(col_num+1, col_num+1, colWidth[value])
+            worksheet.write(0, col_num + 1, value, header_format)
+        for row_num,value in enumerate(myData.index.values):
+            #worksheet.set_row(row_num+1, None, data_format)
+            worksheet.write(row_num+1, 0, value+1, index_format)
+        #列宽
+        print('保留节目数：{}'.format(myData.shape[0]))
+        worksheet.freeze_panes(1, 1)
+        #worksheet.set_column(myData.shape[1]+1, 200, None, defaul_format, {'hidden': 0})
+        for i in range(myData.shape[0]):
+            if myData.loc[i, '来源'] == '硬盘':
+                datastyle = data_format
+            else:
+                datastyle = data2_format
+            for j in range(myData.shape[1]):
+                value = str(myData.iloc[i,j])
+                if value == 'nan' or value == 'None' or value == '录像机':
+                    value = ""
+                worksheet.write(i+1, j+1, value, datastyle)
+                pass
 
 def main():
 
@@ -375,8 +537,8 @@ def cleardocument(documentname='常规节目主观评测表（评委）.docx'):
                 cell.text = ''
     document.save('常规节目主观评测表（评委）.docx')
 
-def writedocument(file = '常规节目客观打分表.xlsx', blMerge=False):
-    df = pd.read_excel(file, header=2)
+def writedocument(file = 'freeze.xlsx', sheet='常规', blMerge=False):
+    df = pd.read_excel(file, sheet_name=sheet)
     df = df.loc[:, ['序号', '节目名称']]
     df = df.dropna(how='all')
     df['序号'] = df['序号'].astype("int")
@@ -511,9 +673,10 @@ def bulitTable(document, blMerge=False):
     return table
 
 if __name__=="__main__":
-    #huizong()
-    #cleardata()
-    #writetoEx(readtoPD(), bDayin=False)
+    huizong()
+    cleardata()
+    writetoEx(readtoPD(), bPrint=False)
     #cleardocument()
-    writedocument('宣传片客观打分表.xlsx', blMerge=True)
+    #writedocument(sheet='宣传片', blMerge=True)
+
 
