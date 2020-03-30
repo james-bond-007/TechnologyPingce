@@ -13,6 +13,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
 from docx.shared import Inches, Pt, Mm
 from docx.oxml.ns import qn
+import re
 
 def open_excel(file= 'test.xls'):
     try:
@@ -54,7 +55,7 @@ def excel_table_byname(file='test.xls',colnameindex=0,by_name=u'Sheet1'):
              list.append(app)
     return list
 
-def wblist(extension='.xls'):
+def wblist(filedir='./节目单', extension='.xls'):
     '''
     for root, dirs, files in os.walk("./节目单", topdown=False):
         #文件
@@ -66,7 +67,7 @@ def wblist(extension='.xls'):
     '''
     # 处理文件名
     documnetName = []
-    for root, dirs, files in os.walk("./节目单", topdown=False):
+    for root, dirs, files in os.walk(filedir, topdown=False):
         # 文件
         for name in files:
             # print(os.path.join(root, name))
@@ -672,11 +673,51 @@ def bulitTable(document, blMerge=False):
             table.cell(i+2, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     return table
 
-if __name__=="__main__":
-    huizong()
-    cleardata()
-    writetoEx(readtoPD(), bPrint=False)
-    #cleardocument()
-    #writedocument(sheet='宣传片', blMerge=True)
+def tongjifen(file = 'fen.xlsx'):
+    pd.set_option('precision', 3)
+    documnents = wblist(filedir='./主观测评/宣传片', extension='.docx')
+    data = {}
+    zhuanjia = []
+    for i in documnents:
+        name = re.findall(r'[（](.*?)[）]', i[1])
+        data['序号'] = []
+        data['节目名称'] = []
+        data[name[0]] = []
+        zhuanjia.append(name[0])
+        filename = os.path.join(i[0], i[1])
+        documnent = Document(filename)
+        tables = documnent.tables
+        for table in tables:
+            for j in range(len(table.rows)//8):
+                data['序号'].append(table.cell(j*8+2, 0).text)
+                data['节目名称'].append(table.cell(j*8+2, 1).text)
+                fen = table.cell(j*8+2, 13).text
+                data[name[0]].append(fen)
+    print(data)
+    df = pd.DataFrame.from_dict(data)
+    df[zhuanjia] = df[zhuanjia].apply(pd.to_numeric)
+    temp = df[zhuanjia]
+    df['avg'] = temp.mean(axis=1)
+    df = df.sort_values(by='avg', ascending=False)
+    df.reset_index(drop=True, inplace=True)
+    print(df)
 
+    with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name="精选", startrow=0, na_rep='')
+
+if __name__=="__main__":
+    # 第一步
+    # 将节目单汇总成各频道表
+    #huizong()
+    # 删除无用列，整理广告等无用节目
+    #cleardata()
+    # 第二步
+    # 把各频道筛选出来的节目汇总到一张表中，处理节目名称
+    #writetoEx(readtoPD(), bPrint=False)
+    # 第三步
+    # 生成主观评测表
+    #writedocument(sheet='宣传片', blMerge=True)
+    #第四步
+    # 汇总主观评测分数
+    tongjifen()
 
