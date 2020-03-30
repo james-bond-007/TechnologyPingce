@@ -3,7 +3,6 @@
 from docx import Document
 import xlwt
 import xlrd
-from xlutils.copy import copy
 import sys
 import os
 import json
@@ -143,6 +142,10 @@ def writeWord(filename, dict1):
     j = 0
     for table in tempTable:
         for rowIndex in range(len(table.rows) // 8):
+            mytext = '。'.join(dict1[j][1]['综评'])
+            mytext = mytext.replace("。。", "。")
+            mytext = mytext.replace("，。", "。")
+            table.cell(rowIndex*8+7, columnIndex).text = mytext
             for i in range(1, 6):
                 mytext = '。'.join(dict1[j][1]['测试{}'.format(i)])
                 mytext = mytext.replace("。。", "。")
