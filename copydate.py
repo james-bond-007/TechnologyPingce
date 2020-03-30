@@ -675,7 +675,7 @@ def bulitTable(document, blMerge=False):
 
 def tongjifen(file = 'fen.xlsx', blsort=True):
     pd.set_option('precision', 3)
-    documnents = wblist(filedir='./主观测评/常规节目', extension='.docx')
+    documnents = wblist(filedir='./主观评测/常规节目', extension='.docx')
     data = {}
     zhuanjia = []
     for i in documnents:
