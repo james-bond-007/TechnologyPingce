@@ -673,9 +673,9 @@ def bulitTable(document, blMerge=False):
             table.cell(i+2, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     return table
 
-def tongjifen(file = 'fen.xlsx'):
+def tongjifen(file = 'fen.xlsx', blsort=True):
     pd.set_option('precision', 3)
-    documnents = wblist(filedir='./主观测评/宣传片', extension='.docx')
+    documnents = wblist(filedir='./主观测评/常规节目', extension='.docx')
     data = {}
     zhuanjia = []
     for i in documnents:
@@ -693,17 +693,19 @@ def tongjifen(file = 'fen.xlsx'):
                 data['节目名称'].append(table.cell(j*8+2, 1).text)
                 fen = table.cell(j*8+2, 13).text
                 data[name[0]].append(fen)
-    print(data)
+    # print(data)
     df = pd.DataFrame.from_dict(data)
     df[zhuanjia] = df[zhuanjia].apply(pd.to_numeric)
     temp = df[zhuanjia]
-    df['avg'] = temp.mean(axis=1)
-    df = df.sort_values(by='avg', ascending=False)
-    df.reset_index(drop=True, inplace=True)
-    print(df)
+    df['avg'] = temp.mean(axis=1, )
+    df['avg'] = df['avg'].round(2)
+    if blsort:
+        df = df.sort_values(by='avg', ascending=False)
+        df.reset_index(drop=True, inplace=True)
+    print(df.info())
 
     with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name="精选", startrow=0, na_rep='')
+        df.to_excel(writer, sheet_name="精选", startrow=0, na_rep='', index=False)
 
 if __name__=="__main__":
     # 第一步
@@ -719,5 +721,5 @@ if __name__=="__main__":
     #writedocument(sheet='宣传片', blMerge=True)
     #第四步
     # 汇总主观评测分数
-    tongjifen()
+    tongjifen(blsort=False)
 
