@@ -7,7 +7,7 @@ import sys
 import os
 import json
 import re
-
+from copydate import wblist, writedocument
 
 def adddocx():
     file = Document('./表格1.docx')
@@ -170,19 +170,13 @@ def writeWord(filename, dict1):
 if __name__ == "__main__":
 
     documentPath = './主观评测/常规节目'
-    documnetsName = os.listdir(documentPath)
-    # print(documnetsName)
-    documnetsNames = []
-    for docxname in documnetsName:
-        if docxname[-5:] == '.docx':
-            documnetsNames.append(docxname)
-
-    data = initdict(documentPath + '/' + documnetsNames[0])
+    documnetsNames = wblist(filedir=documentPath, extension='.docx')
+    data = initdict(os.path.join(documnetsNames[0][0], documnetsNames[0][1]))
 
     for docxname in documnetsNames:
-        filename = documentPath + '/' + docxname
+        filename = os.path.join(docxname[0], docxname[1])
         data = readdocument(filename, data)
-        print(docxname + '完成了，共计{}个文件，还剩下{}个文件'.format(len(documnetsNames),
+        print(docxname[1] + '完成了，共计{}个文件，还剩下{}个文件'.format(len(documnetsNames),
                                                        len(documnetsNames) - documnetsNames.index(docxname) - 1))
 
     # for key, value in dict1.items():
