@@ -237,7 +237,7 @@ def readtoPD(file='filter.xlsx'):
     d.columns = ['节目名称', '期数', '日期']
     s = d['节目名称']
     s = s.str.replace(' 20|-20|-19', '_20', regex=True)
-    d['节目名称'] = s.str.split('_').str.get(0)
+    d['节目名称'] = s.str.split('_').str.get(0).str.strip()
     result.drop(['节目名称'], axis=1, inplace=True)
     result.insert(2, '期数', d['期数'])
     result.insert(2, '节目名称', d['节目名称'])
@@ -571,7 +571,8 @@ def writedocument(file = 'freeze.xlsx', sheet='常规', blMerge=False):
             cell.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
             cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         print(j)
-    document.save('test.docx')
+    document.save(sheet+'模板.docx')
+    return sheet+'模板.docx'
 
 def bulitTable(document, blMerge=False):
 
@@ -673,7 +674,7 @@ def bulitTable(document, blMerge=False):
             table.cell(i+2, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     return table
 
-def tongjifen(file = 'fen.xlsx', blsort=True):
+def tongjifen(file = '主观分汇总.xlsx', blsort=True):
     pd.set_option('precision', 3)
     documnents = wblist(filedir='./主观评测/常规节目', extension='.docx')
     data = {}
@@ -697,15 +698,99 @@ def tongjifen(file = 'fen.xlsx', blsort=True):
     df = pd.DataFrame.from_dict(data)
     df[zhuanjia] = df[zhuanjia].apply(pd.to_numeric)
     temp = df[zhuanjia]
-    df['avg'] = temp.mean(axis=1, )
-    df['avg'] = df['avg'].round(2)
+    df['主观'] = temp.mean(axis=1, )
+    # df['avg'] = df['avg'].round(2)
     if blsort:
-        df = df.sort_values(by='avg', ascending=False)
+        df = df.sort_values(by='主观', ascending=False)
         df.reset_index(drop=True, inplace=True)
     print(df.info())
 
     with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name="精选", startrow=0, na_rep='', index=False)
+        df.to_excel(writer, sheet_name="汇总", startrow=0, na_rep='', index=False)
+
+def jisuanfen(file='总分统计表.xlsx'):
+    df1 = pd.read_excel('./主观分汇总.xlsx')
+    #print(df1)
+    df2 = pd.read_excel('./客观分.xlsx', header=1)
+    df2 = df2[['节目名称', '总评分']]
+    df2 = df2.dropna(how='all')
+    df2.rename(columns={'总评分':'客观'}, inplace=True)
+    #print(df2)
+    #result = pd.concat([df1, df2], axis=1, join_axes=[df1.index])
+    result = pd.merge(df1, df2, on='节目名称')
+    #print(result.info())
+    #result['总分'] = result['主观分']*0.9 + result['客观分']*0.1
+    result['总分'] = result.apply(lambda x : x['主观'] * 0.90 + x['客观'] * 0.10, axis=1)
+    result['总分'] = result['总分'].round(2)
+    result['等级'] = result.apply(lambda x: '优秀' if x['总分'] > 90 else '良好' if x['总分'] > 80 else '及格' if x['总分'] > 60 else '不及格', axis=1)
+    result = result.sort_values(by='总分', ascending=False)
+    result.reset_index(drop=True, inplace=True)
+    print(result)
+    with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
+        result.to_excel(writer, sheet_name="总分", startrow=1, na_rep='')
+        workbook = writer.book
+        worksheet = writer.sheets['总分']
+
+        merge_format = workbook.add_format({
+            'bold': True,
+            #'border': 6,
+            'font_size': 17,
+            'align': 'center',  # 水平居中
+            'valign': 'vcenter',  # 垂直居中
+            #'fg_color': '#D7E4BC',  # 颜色填充
+        })
+        header_format = workbook.add_format({
+            'bold': True,
+            'border': 1,
+            'font_size': 11,
+            'align': 'center',  # 水平居中
+            'valign': 'vcenter',  # 垂直居中
+            'fg_color': '#D7E4BC',  # 颜色填充
+        })
+        data_format = workbook.add_format({
+            # 'bold': True,
+            'border': 1,
+            'font_size': 11,
+            'align': 'center',  # 水平居中
+            'valign': 'vcenter',  # 垂直居中
+            # 'fg_color': '#D7E4BC',  # 颜色填充
+            'text_wrap': 1,
+        })
+        data = '2020年第一季度常规节目评测分数统计排序表'
+        worksheet.merge_range(0, 0, 0, result.shape[1], data, merge_format)
+        #worksheet.write(0, 0, '2020年第一季度常规节目评测分数统计排序表')
+        worksheet.write(1, 0, '排名', header_format)
+        # Write the column headers with the defined format.
+        colWidth = {'排名':4.93, '序号': 4.93, '节目名称': 27.93, '专家': 6.93,
+                    '主客观分': 8.58, '总分': 4.93}
+        worksheet.set_column(0, 1, colWidth['排名'])
+        worksheet.set_column(2, 2, colWidth['节目名称'])
+        worksheet.set_column(3, 11, colWidth['专家'])
+        worksheet.set_column(12, 15, colWidth['总分'])
+        for col_num, value in enumerate(result.columns.values):
+            # colWidth = max(len(value), max(myData[value].astype(str).str.len()))+3
+            # print(colWidth)
+            #worksheet.set_column(col_num + 1, col_num + 1, colWidth[value])
+            worksheet.write(1, col_num + 1, value, header_format)
+        for row_num, value in enumerate(result.index.values):
+            # worksheet.set_row(row_num+1, None, data_format)
+            worksheet.write(row_num + 2, 0, value + 1, header_format)
+        # 列宽
+        # worksheet.set_column(myData.shape[1]+1, 200, None, defaul_format, {'hidden': 0})
+        for i in range(result.shape[0]):
+            for j in range(result.shape[1]):
+                value = result.iloc[i, j]
+                worksheet.write(i + 2, j + 1, value, data_format)
+
+def database(file='database.xlsx'):
+    df1 = pd.read_excel('freeze.xlsx', sheet_name='常规')
+    #print(df1.info())
+    df2 = pd.read_excel('总分统计表.xlsx', sheet_name='总分', header=1)
+    #df2 = df2[['节目名称', '主观分', '客观分', '总分']]
+    df = pd.merge(df1, df2)
+    #print(df.head(5), df.info())
+    with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name="基础", na_rep='')
 
 if __name__=="__main__":
     # 第一步
@@ -718,8 +803,11 @@ if __name__=="__main__":
     #writetoEx(readtoPD(), bPrint=False)
     # 第三步
     # 生成主观评测表
-    #writedocument(sheet='宣传片', blMerge=True)
+    #writedocument(sheet='常规', blMerge=False)
     #第四步
     # 汇总主观评测分数
-    tongjifen(blsort=False)
-
+    #tongjifen(blsort=False)
+    # 计算总分
+    #jisuanfen()
+    # 合成数据基础表
+    database()
