@@ -90,7 +90,7 @@ def tableHeader(book, documnetName):
     pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
     for i in range(7):
         sheet = book.add_sheet(pindao[i], cell_overwrite_ok=True)
-        sheet.row(0).write(0, '日期')
+        sheet.row(0).write(0, '播出时间')
         for j in range(len(colnames)):
             sheet.row(0).write(j + 1, colnames[j])
             if len(colnames[j]) == 0:
@@ -160,7 +160,7 @@ def huizong(filename='./total.xlsx'):
         ndate = '2020/{}/{}'.format(ndate[0], ndate[1])
         sheetName = int(name.split('-')[0]) - 1
         data = pd.read_excel(os.path.join(file[0], name))
-        data.insert(0, '日期', ndate)
+        data.insert(0, '播出时间', ndate)
         if df[pindao[sheetName]].empty:
             df[pindao[sheetName]] = data
         else:
@@ -203,7 +203,7 @@ def cleardata(file='filter.xlsx'):
         rownumber = {}
         for i in pindao:
             print('正在整理:{}'.format(i))
-            df = pd.read_excel('total.xls', i,)
+            df = pd.read_excel('total.xlsx', i,)
             df, xdf = programefilter(df)
             rownumber[i] = df.shape[0]
             df.to_excel(writer, sheet_name=i, startrow=0, na_rep='', index=False)
@@ -217,7 +217,7 @@ def cleardata(file='filter.xlsx'):
 def readtoPD(file='filter.xlsx'):
     # 读取源数据
     pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
-    biaotou = ['日期', '节目名称', '长度', '主视源', '磁带条码']
+    biaotou = ['播出时间', '节目名称', '长度', '主视源', '磁带条码']
     # 表头格式清除
     # pd.io.formats.excel.header_style = None
     df = pd.read_excel(file, sheet_name=pindao)
@@ -226,7 +226,7 @@ def readtoPD(file='filter.xlsx'):
         df[x].insert(1, '频道', x)
     result = pd.concat(df, ignore_index=True)
     #
-    result['日期'].astype('str')
+    result['播出时间'].astype('str')
     # 处理节目名称列
     s = result['节目名称']
     s = s.str.replace('^.套', '')
@@ -354,9 +354,9 @@ def writetoEx1(myData, file='result.xlsx', bPrint=False):
 
         worksheet.write(0, 0, '序号',header_format)
         # Write the column headers with the defined format.
-        colWidth = {'序号':4.54,'日期':10.21,'日期1':10.66,'频道':4.54,'节目名称':29.43,'期数':11.55,
-                    '长度':8.58,'来源':6.68,'责任人':6.68}
-        worksheet.set_column(0,0,colWidth['序号'])
+        colWidth = {'序号':4.54, '播出时间':10.21, '频道':4.54, '节目名称':29.43, '期数':11.55,
+                    '长度':8.58, '来源':6.68, '责任人':6.68}
+        worksheet.set_column(0, 0, colWidth['序号'])
         for col_num, value in enumerate(myData.columns.values):
             #colWidth = max(len(value), max(myData[value].astype(str).str.len()))+3
             #print(colWidth)
@@ -489,9 +489,9 @@ def writetoEx(myData, file='result.xlsx', bPrint=False):
 
         worksheet.write(0, 0, '序号',header_format)
         # Write the column headers with the defined format.
-        colWidth = {'序号':4.54,'日期':10.21,'日期1':10.66,'频道':4.54,'节目名称':29.43,'期数':11.55,
+        colWidth = {'序号':4.54,'播出时间':10.21,'频道':4.54,'节目名称':29.43,'期数':11.55,
                     '长度':8.58,'来源':6.68,'责任人':6.68}
-        worksheet.set_column(0,0,colWidth['序号'])
+        worksheet.set_column(0, 0, colWidth['序号'])
         for col_num, value in enumerate(myData.columns.values):
             #colWidth = max(len(value), max(myData[value].astype(str).str.len()))+3
             #print(colWidth)
@@ -783,7 +783,8 @@ def jisuanfen(file='总分统计表.xlsx'):
                 worksheet.write(i + 2, j + 1, value, data_format)
 
 def database(file='database.xlsx'):
-    df1 = pd.read_excel('freeze.xlsx', sheet_name='常规')
+    df1 = pd.read_excel('freeze.xlsx', sheet_name='常规', parse_dates=['播出时间'])
+    df1['播出时间'] = df1['播出时间'].dt.strftime('%Y/%m/%d')
     #print(df1.info())
     df2 = pd.read_excel('总分统计表.xlsx', sheet_name='总分', header=1)
     #df2 = df2[['节目名称', '主观分', '客观分', '总分']]
@@ -810,4 +811,4 @@ if __name__=="__main__":
     # 计算总分
     #jisuanfen()
     # 合成数据基础表
-    database()
+    #database()
