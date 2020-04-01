@@ -28,7 +28,7 @@ def isEnglish(checkStr):
 
 
 # 读取模板表
-def readTemplate(filename='./主观评测/常规节目/2020年第一季度常规节目主观评测表（董立坤）20200317.docx'):
+def readTemplate(filename='./test.docx'):
     document = Document(filename)  # Document(templete.decode('utf-8'))
     tempTable = document.tables
     table = tempTable[2]
@@ -168,7 +168,7 @@ def writeWord(filename, dict1):
 
 
 if __name__ == "__main__":
-
+    file = writedocument(sheet='常规', blMerge=False)
     documentPath = './主观评测/常规节目'
     documnetsNames = wblist(filedir=documentPath, extension='.docx')
     data = initdict(os.path.join(documnetsNames[0][0], documnetsNames[0][1]))
@@ -181,6 +181,6 @@ if __name__ == "__main__":
 
     # for key, value in dict1.items():
     #    print('{key}:{value}'.format(key=key, value=value))
-    writeWord(filename, data)
+    writeWord(file, data)
     writeExcel(data)
     writeJson(data)
