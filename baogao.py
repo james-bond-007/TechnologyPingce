@@ -10,8 +10,16 @@ import numpy as np
 
 def initBaogao(file='./demo.docx'):
     document = Document()
-    document.styles['Normal'].font.name = u'宋体'
-    document.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')
+    # 设置一个空白样式
+    style = document.styles['Normal']
+    # 设置西文字体
+    style.font.name = u'宋体'#'Times New Roman'
+    # 设置中文字体
+    style.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')#u'宋体')#
+    # 获取段落样式
+    paragraph_format = style.paragraph_format
+    # 首行缩进0.74厘米，即2个字符
+    paragraph_format.first_line_indent = Mm(7.4)
 
     #标题级别
     heading1 = 0
@@ -19,7 +27,14 @@ def initBaogao(file='./demo.docx'):
     sections = document.sections
     current_section = sections[-1]
     #第一章
-    document.add_heading('第一章 本期评测综述', heading1)
+    p = document.add_heading('第一章 本期评测综述', heading1)
+    '''
+    p1 = document.add_paragraph()
+    run = p1.add_run(u'第一章 本期评测综述')
+    run.font.name = u'宋体'
+    r = run._element
+    r.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
+    '''
     p = document.add_paragraph('A plain paragraph having some ')
     p.add_run('bold').bold = True
     p.add_run(' and some ')
@@ -30,7 +45,8 @@ def initBaogao(file='./demo.docx'):
                      '四、本期亮点',
                      '五、本期报告用语说明', ]
     for heading in heading_first:
-        document.add_heading(heading, heading2)
+        head = document.add_heading(heading, heading2)
+        #head.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
         document.add_paragraph('please input some words.')
     p_shuoming = ['台外录制：以台外演播室录制为主，包括北京的演播室、联合录制、西院五楼新媒体演播室',
                   '台内录制：以台内演播室录制为主，包括800演播厅、4heading10演播厅、300演播厅、260演播厅、120演播室、110演播室、70演播室',
@@ -182,6 +198,27 @@ def fenxi_pindao(file='demo.docx'):
     df['主观'] = df['主观'].astype(np.int64)
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
+    pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
+
+    result ={}
+    fenxi = []
+    for i in pindao:
+        df_temp = df[df['频道']==i]
+        temp = df_temp.loc[:,'等级'].value_counts()
+        temp = temp.rename(i)
+        s = pd.Series([df_temp['总分'].max(), df_temp['总分'].min(), df_temp['总分'].mean()],
+                      index=['最大值', '最小值', '平均值'])
+        s = s.rename(i)
+        temp = temp.append(s)
+        print(temp)
+        fenxi.append(temp)
+        df_temp = df_temp.sort_values(by='总分', ascending=False)
+    w = pd.DataFrame(fenxi)
+    s = w.columns.to_list()
+    dengji = ['优秀', '良好', '良', '及格', '不及格']
+    for i in s:
+        dengji.pop(i)
+
     document = Document(file)
     #将表格插入指定位置
     for p in document.paragraphs:
