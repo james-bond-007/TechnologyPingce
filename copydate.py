@@ -722,7 +722,7 @@ def jisuanfen(file='总分统计表.xlsx'):
     #result['总分'] = result['主观分']*0.9 + result['客观分']*0.1
     result['总分'] = result.apply(lambda x : x['主观'] * 0.90 + x['客观'] * 0.10, axis=1)
     result['总分'] = result['总分'].round(2)
-    result['等级'] = result.apply(lambda x: '优秀' if x['总分'] > 90 else '良好' if x['总分'] > 80 else '及格' if x['总分'] > 60 else '不及格', axis=1)
+    result['等级'] = result.apply(lambda x: '优秀' if x['总分'] >= 90 else '良好' if x['总分'] >= 85 else '良' if x['总分'] >= 80 else '及格' if x['总分'] >= 60 else '不及格', axis=1)
     result = result.sort_values(by='总分', ascending=False)
     result.reset_index(drop=True, inplace=True)
     print(result)
@@ -807,8 +807,8 @@ if __name__=="__main__":
     #writedocument(sheet='常规', blMerge=False)
     #第四步
     # 汇总主观评测分数
-    #tongjifen(blsort=False)
+    tongjifen(blsort=False)
     # 计算总分
-    #jisuanfen()
+    jisuanfen()
     # 合成数据基础表
-    #database()
+    database()
