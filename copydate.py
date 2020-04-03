@@ -598,68 +598,35 @@ def bulitTable(document, blMerge=False):
     table.cell(0, 13).merge(table.cell(1, 13))
     table.cell(2, 0).merge(table.cell(7, 0))
     table.cell(2, 1).merge(table.cell(7, 1))
-    table.cell(2, 3).merge(table.cell(2, 12))
-    table.cell(3, 3).merge(table.cell(3, 12))
-    table.cell(4, 3).merge(table.cell(4, 12))
-    table.cell(5, 3).merge(table.cell(5, 12))
-    table.cell(6, 3).merge(table.cell(6, 12))
-    table.cell(7, 3).merge(table.cell(7, 12))
-    table.cell(2, 13).merge(table.cell(7, 13))
+    #总评分设置格式
+    cell1 = table.cell(2, 13).merge(table.cell(7, 13))
+    cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    #测试点及综评
+    for i in range(2, 8):
+        cell1 = table.cell(i, 3).merge(table.cell(i, 12))
+        #cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     if blMerge:
         table.cell(2, 2).merge(table.cell(7, 2))
         table.cell(2, 3).merge(table.cell(7, 12))
-    hdr_cells0 = table.rows[0].cells
-    hdr_cells1 = table.rows[1].cells
 
-    hdr_cells0[0].text ='序号'
-    hdr_cells0[0].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells0[1].text = '节目名称'
-    hdr_cells0[1].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells0[2].text = '测试点'
-    hdr_cells0[2].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[2].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells0[3].text = '图像（70）分'
-    hdr_cells0[3].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[3].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells0[10].text = '声音（30）分'
-    hdr_cells0[10].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[10].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells0[13].text = '总评分'
-    hdr_cells0[13].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells0[13].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    title1 = ['序号', '节目名称', '测试点', '图像（70）分', '声音（30）分','总评分']
+    j = 0
+    for i in [0,1,2,3,10,13]:
+        cell1 = table.cell(0, i)
+        cell1.text = title1[j]
+        cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        j += 1
+    title2 = ['杂波\r干扰', '清晰度','亮度\r层次', '色彩\r保真', '制作\r难度',
+             '素材\r资料', '灯光\r舞美', '声音\r质量', '声音\r音量', '声画\r协调']
+    for i in range(len(title2)):
+        cell1 = table.cell(1, i+3)
+        cell1.text = title2[i]
+        cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
-    hdr_cells1[3].text = '杂波\r干扰'
-    hdr_cells1[3].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[3].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[4].text = '清晰度'
-    hdr_cells1[4].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[4].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[5].text = '亮度\r层次'
-    hdr_cells1[5].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[5].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[6].text = '色彩\r保真'
-    hdr_cells1[6].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[6].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[7].text = '制作\r难度'
-    hdr_cells1[7].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[7].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[8].text = '素材\r资料'
-    hdr_cells1[8].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[8].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[9].text = '灯光\r舞美'
-    hdr_cells1[9].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[9].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[10].text = '声音\r质量'
-    hdr_cells1[10].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[10].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[11].text = '声音\r音量'
-    hdr_cells1[11].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[11].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    hdr_cells1[12].text = '声画\r协调'
-    hdr_cells1[12].paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    hdr_cells1[12].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     if blMerge:
         table.cell(2, 2).text = '综评'
         table.cell(2, 2).paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -721,7 +688,7 @@ def jisuanfen(file='总分统计表.xlsx'):
     #print(result.info())
     #result['总分'] = result['主观分']*0.9 + result['客观分']*0.1
     result['总分'] = result.apply(lambda x : x['主观'] * 0.90 + x['客观'] * 0.10, axis=1)
-    result['总分'] = result['总分'].round(2)
+    result['总分'] = result['总分'].round(0)
     result['等级'] = result.apply(lambda x: '优秀' if x['总分'] >= 90 else '良好' if x['总分'] >= 85 else '良' if x['总分'] >= 80 else '及格' if x['总分'] >= 60 else '不及格', axis=1)
     result = result.sort_values(by='总分', ascending=False)
     result.reset_index(drop=True, inplace=True)
@@ -804,11 +771,11 @@ if __name__=="__main__":
     #writetoEx(readtoPD(), bPrint=False)
     # 第三步
     # 生成主观评测表
-    #writedocument(sheet='常规', blMerge=False)
+    writedocument(sheet='常规', blMerge=False)
     #第四步
     # 汇总主观评测分数
-    tongjifen(blsort=False)
+    #tongjifen(blsort=False)
     # 计算总分
-    jisuanfen()
+    #jisuanfen()
     # 合成数据基础表
-    database()
+    #database()
