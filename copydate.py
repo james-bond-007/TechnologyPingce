@@ -165,16 +165,19 @@ def huizong(filename='./total.xlsx'):
         df[i] = pd.DataFrame()
     for file in files:
         name = file[1]
-        ndate = name.split('-')[2]
+        print(name)
+        ndate = name[2:]
         ndate = ndate.split('.')
         ndate = '2020/{}/{}'.format(ndate[0], ndate[1])
-        sheetName = int(name.split('-')[0]) - 1
+        sheetName = name[:2]
+        if sheetName == '科教':
+            sheetName = '少儿'
         data = pd.read_excel(os.path.join(file[0], name))
         data.insert(0, '播出时间', ndate)
-        if df[pindao[sheetName]].empty:
-            df[pindao[sheetName]] = data
+        if df[sheetName].empty:
+            df[sheetName] = data
         else:
-            df[pindao[sheetName]] = pd.concat([df[pindao[sheetName]], data])
+            df[sheetName] = pd.concat([df[sheetName], data])
         print(file[1])
     total_number = {}
     with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
@@ -185,7 +188,7 @@ def huizong(filename='./total.xlsx'):
     print('各频道节目条数：{}'.format(total_number))
 
 
-def programefilter(df):
+def programefilter(df, jiemu):
     # df = pd.read_excel('total.xls')
     # 清除列
     df = df.loc[:, ~ df.columns.str.contains(':')]
@@ -194,15 +197,22 @@ def programefilter(df):
     # 宣
     xdf = df[df['节目名称'].str.contains('宣')]
     # 广告
-    blAdvert = df['主视源'].str.contains('广告')
+    blAdvert = df['主视源'].str.contains('广告|广告占位')
     df = df[~ blAdvert]
+    # 节目
+    jdf = pd.DataFrame()
+    for i in jiemu['节目名称']:
+        data = df[df['节目名称'].str.contains(i)].copy()
+        data['time'] = data['开始时间'].str.split(':').str.get(0).astype(int)
+        data = data[data['time']>5]
+        jdf = pd.concat([jdf, data])
     # 其它
     blOther = df['节目名称'].str.contains(
         '集|宣|广告|预报|预告|ID|即播|预报|剧情|片头|片尾|剧透|招募|新闻联播|头条|京津冀|这一年|旅游|呼号|导视|多看点|欢乐送|标版|引进节目|专题|logo|LOGO|战略|气象|德龙|专临|前情回顾|先睹为快|公益|年货')
     df = df[~ blOther]
 
     # print(df.info())
-    return df, xdf
+    return df, xdf, jdf
 
 
 def cleardata(file='filter.xlsx'):
@@ -217,13 +227,21 @@ def cleardata(file='filter.xlsx'):
         for i in pindao:
             print('正在整理:{}'.format(i))
             df = pd.read_excel('total.xlsx', i, )
-            df, xdf = programefilter(df)
-            rownumber[i] = df.shape[0]
-            df.to_excel(writer, sheet_name=i, startrow=0, na_rep='', index=False)
-            worksheet = writer.sheets[i]
+            # 读取频道节目列表
+            ndf = pd.read_excel('programlist.xlsx', i, )
+            #s = ndf['节目名称'].str.cat(sep='|')
+            # 筛选整理节目
+            df, xdf, jdf = programefilter(df, ndf)
+            rownumber[i] = jdf.shape[0]
+            jdf.to_excel(writer, sheet_name='{}'.format(i), startrow=0, na_rep='', index=False)
+            worksheet = writer.sheets['{}'.format(i)]
             # 设置节目名称列列宽
             worksheet.set_column(5, 5, 35)
-            xdf.to_excel(writer, sheet_name='{}宣'.format(i), startrow=0, na_rep='', index=False)
+            df.to_excel(writer, sheet_name='{}节目'.format(i), startrow=0, na_rep='', index=False)
+            worksheet = writer.sheets['{}节目'.format(i)]
+            # 设置节目名称列列宽
+            worksheet.set_column(5, 5, 35)
+            # xdf.to_excel(writer, sheet_name='{}宣'.format(i), startrow=0, na_rep='', index=False)
 
     print('初选节目数：{}'.format(rownumber))
 
@@ -860,9 +878,10 @@ if __name__ == "__main__":
     # huizong()
     # 删除无用列，整理广告等无用节目
     # cleardata()
+
     # 第二步
     # 把各频道筛选出来的节目汇总到一张表中，处理节目名称
-    # writetoEx(readtoPD(), bPrint=False)
+    writetoEx(readtoPD(), bPrint=False)
     # 第三步
     # 生成主观评测表
     # writedocument(sheet='常规', blMerge=False)
@@ -871,6 +890,6 @@ if __name__ == "__main__":
     # tongjifen(blsort=False)
     # 计算总分
     # huizongfen()
-    jisuanfen()
+    # jisuanfen()
     # 合成数据基础表
     # database()
