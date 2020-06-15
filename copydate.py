@@ -195,7 +195,7 @@ def programefilter(df, jiemu):
     # df = df.dropna(axis=1, how='all')
     # 清除行
     # 宣
-    xdf = df[df['节目名称'].str.contains('宣')]
+    xdf = df[df['节目名称'].str.contains('中插')]
     # 广告
     blAdvert = df['主视源'].str.contains('广告|广告占位')
     df = df[~ blAdvert]
@@ -241,7 +241,7 @@ def cleardata(file='filter.xlsx'):
             worksheet = writer.sheets['{}节目'.format(i)]
             # 设置节目名称列列宽
             worksheet.set_column(5, 5, 35)
-            # xdf.to_excel(writer, sheet_name='{}宣'.format(i), startrow=0, na_rep='', index=False)
+            xdf.to_excel(writer, sheet_name='{}宣'.format(i), startrow=0, na_rep='', index=False)
 
     print('初选节目数：{}'.format(rownumber))
 
@@ -683,6 +683,7 @@ def tongjifen(file='主观分汇总.xlsx', blsort=True, precision=0):
     zhuanjia = []
     for i in documnents:
         name = re.findall(r'[（](.*?)[）]', i[1])
+        print(name[0])
         data['序号'] = []
         data['节目名称'] = []
         data[name[0]] = []
@@ -695,6 +696,17 @@ def tongjifen(file='主观分汇总.xlsx', blsort=True, precision=0):
                 data['序号'].append(table.cell(j * 8 + 2, 0).text)
                 data['节目名称'].append(table.cell(j * 8 + 2, 1).text)
                 fen = table.cell(j * 8 + 2, 13).text
+                # 去掉空格
+                # str_list = fen.split()
+                # fen = ''.join(str_list)
+
+                fen = fen.strip()
+                if len(fen) > 2:
+                    print('--->', table.cell(j * 8 + 2, 1).text, fen)
+                # if len(fen) > 1:
+                    fen = re.findall("\d+", fen)[0]
+                elif len(fen) < 2:
+                    print('--->', table.cell(j * 8 + 2, 1).text, fen)
                 data[name[0]].append(fen)
     # print(data)
     df = pd.DataFrame.from_dict(data)
@@ -881,13 +893,13 @@ if __name__ == "__main__":
 
     # 第二步
     # 把各频道筛选出来的节目汇总到一张表中，处理节目名称
-    writetoEx(readtoPD(), bPrint=False)
+    # writetoEx(readtoPD(), bPrint=False)
     # 第三步
     # 生成主观评测表
     # writedocument(sheet='常规', blMerge=False)
     # 第四步
     # 汇总主观评测分数
-    # tongjifen(blsort=False)
+    tongjifen(blsort=False)
     # 计算总分
     # huizongfen()
     # jisuanfen()
