@@ -809,7 +809,7 @@ def jisuanfen(file='总分统计表.xlsx'):
             # 'fg_color': '#D7E4BC',  # 颜色填充
             'text_wrap': 1,
         })
-        data = '2020年第一季度常规节目评测分数统计排序表'
+        data = '2020年第二季度常规节目评测分数统计排序表'
         worksheet.merge_range(0, 0, 0, df.shape[1], data, merge_format)
         #worksheet.write(0, 0, '2020年第一季度常规节目评测分数统计排序表')
         worksheet.write(1, 0, '排名', header_format)
@@ -853,11 +853,13 @@ def database(file='database.xlsx'):
     df1 = pd.read_excel('freeze.xlsx', sheet_name='常规', parse_dates=['播出时间'])
     df1['播出时间'] = df1['播出时间'].dt.strftime('%Y/%m/%d')
     # print(df1.info())
-    df2 = pd.read_excel('总分统计表.xlsx', sheet_name='总分', header=1)
+    df2 = pd.read_excel('总分统计表.xlsx', sheet_name='排序', header=1)
     # df2 = df2[['节目名称', '主观分', '客观分', '总分']]
+    # print(df2.info())
     df = pd.merge(df1, df2)
-    # print(df.head(5), df.info())
-
+    print(df.head(5), df.info())
+    # 排序
+    df = df.sort_values(by=['排名'], ascending=True)
     # 录制地点分类
     introduce = ['引进节目', '引进包装']
     outdoor = ['外景录制']
@@ -899,9 +901,9 @@ if __name__ == "__main__":
     # writedocument(sheet='常规', blMerge=False)
     # 第四步
     # 汇总主观评测分数
-    tongjifen(blsort=False)
+    # tongjifen(blsort=False)
     # 计算总分
     # huizongfen()
     # jisuanfen()
     # 合成数据基础表
-    # database()
+    database()
