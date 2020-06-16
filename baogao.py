@@ -108,6 +108,9 @@ def move_table_after(table, paragraph):
     tbl, p = table._tbl, paragraph._p
     p.addnext(tbl)
 
+def move_paragraph_after(pnew, pold):
+    tbl, p = pnew._p, pold._p
+    p.addnext(tbl)
 
 def setCellBackgroundColor(self, cell, rgbColor):
     if not isinstance(rgbColor, RGBValue):
@@ -121,6 +124,56 @@ def setCellBackgroundColor(self, cell, rgbColor):
     shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value=colorStr))
     cell._tc.get_or_add_tcPr().append(shading_elm_1)
 
+def canping_shuliang(file='demo.docx'):
+    df = pd.read_excel('database.xlsx')
+    df = df[['序号', '节目名称', '播出时间', '频道']]
+    counts = df['频道'].value_counts()
+    print(counts)
+    pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
+    myText = "1、抽测节目共计{}个。包括：".format(df.shape[0])
+    for i in pindao:
+        myText = '{}河北{}{}个、'.format(myText, i, counts[i])
+    myText = '{}。'.format(myText[:-1])
+    print(myText)
+    document = Document(file)
+    # 将表格插入指定位置
+    for p in document.paragraphs:
+        if re.match("^Heading \d+$", p.style.name):
+            if p.text == '一、参评节目数量':
+                print(p.text)
+                # 因为表头占一行，所以行数inRow加1
+                pNew = document.add_paragraph(myText)
+                pNew.paragraph_format.first_line_indent = Mm(7.4)
+                move_paragraph_after(pNew, p)
+
+    document.save(file)
+
+def defen_dengji(file='demo.docx'):
+    df = pd.read_excel('database.xlsx')
+    df = df[['序号', '节目名称', '播出时间', '等级']]
+    counts = df['等级'].value_counts()
+    print(counts)
+
+    dengji = ['良好', '良', '及格', '不及格']
+    myText = '1、本期常规节目综合评分为{}的节目{}个，'.format('优秀', counts['优秀'])
+    myText = '{}{}率为{}%;'.format(myText, '优秀', round(counts['优秀'] / df.shape[0] * 100, 2))
+    for i in range(len(counts)-1):
+        myText = '{}综合评分为{}的节目{}个，'.format(myText, dengji[i], counts[dengji[i]])
+        myText = '{}占比为{}%;'.format(myText, round(counts[dengji[i]] / df.shape[0] * 100, 2))
+    myText = '{}。'.format(myText[:-1])
+    print(myText)
+    document = Document(file)
+    # 将表格插入指定位置
+    for p in document.paragraphs:
+        if re.match("^Heading \d+$", p.style.name):
+            if p.text == '二、综合得分等级及占比':
+                print(p.text)
+                # 因为表头占一行，所以行数inRow加1
+                pNew = document.add_paragraph(myText)
+                pNew.paragraph_format.first_line_indent = Mm(7.4)
+                move_paragraph_after(pNew, p)
+
+    document.save(file)
 
 def canping_program(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
@@ -396,11 +449,12 @@ def fenxi_zhanbi(file='demo.docx'):
 
 def fenxi_youxiu(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
-    df = df[['节目名称', '播出时间', '总分']]
+    df = df[['节目名称', '播出时间', '总分', '主观', '客观', '序号']]
     df['播出时间'] = pd.to_datetime(df['播出时间'])
     df['播出时间'] = df['播出时间'].apply(lambda x: x.strftime('%Y年%m月%d日'))
-    # 按总分排序
-    df = df.sort_values(by='总分', ascending=False)
+    # 按总分、主观、客观，序号排序
+    df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
+    df = df[['节目名称', '播出时间', '总分']]
     df = df[df['总分'] >= 90]
     df.reset_index(drop=True, inplace=True)
 
@@ -467,11 +521,13 @@ def fenxi_youxiu(file='demo.docx'):
 
 def fenxi_dabiao(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
-    df = df[['节目名称', '播出时间', '总分']]
+    df = df[['节目名称', '播出时间', '总分', '主观', '客观', '序号']]
     df['播出时间'] = pd.to_datetime(df['播出时间'])
     df['播出时间'] = df['播出时间'].apply(lambda x: x.strftime('%Y年%m月%d日'))
     # 按总分排序
-    df = df.sort_values(by='总分', ascending=False)
+    # 按总分、主观、客观，序号排序
+    df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
+    df = df[['节目名称', '播出时间', '总分']]
     df = df[df['总分'] < 85]
     df.reset_index(drop=True, inplace=True)
 
@@ -1801,15 +1857,17 @@ def write_to_Excel(file='database.xlsx', sheet_name='sheet1', start_row=0, start
 
 if __name__ == '__main__':
     initBaogao()
-    fenxi_youxiu()
-    fenxi_dabiao()
-    canping_program()
-    zonghe_fen()
-    rank_pindao()
-    fenxi_pindao()
-    rank_didian()
-    fenxi_didian()
-    rank_fangshi()
-    fenxi_fangshi()
-    Experts_zongping()
+    canping_shuliang()
+    defen_dengji()
+    # fenxi_youxiu()
+    # fenxi_dabiao()
+    # canping_program()
+    # zonghe_fen()
+    # rank_pindao()
+    # fenxi_pindao()
+    # rank_didian()
+    # fenxi_didian()
+    # rank_fangshi()
+    # fenxi_fangshi()
+    # Experts_zongping()
     
