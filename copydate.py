@@ -881,6 +881,8 @@ def database(file='database.xlsx'):
         lambda x: '台内制作' if x['制作方式'] in tai_inter else
         '台外制作' if x['制作方式'] in tai_outer else None, axis=1
     )
+    # 增加评语列
+    df['评语'] = ''
 
     with pd.ExcelWriter(file, engine='xlsxwriter') as writer:
         df.to_excel(writer, sheet_name="基础", na_rep='', index=False)
