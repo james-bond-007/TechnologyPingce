@@ -23,7 +23,7 @@ def initBaogao(file='./demo.docx'):
     # 设置中文字体
     style.element.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')  # '微软雅黑')#
 
-    style = document.styles['Heading 0']
+    style = document.styles['Heading 1']
     font = style.font
     # 获取段落样式
     paragraph_format = style.paragraph_format
@@ -125,14 +125,24 @@ def setCellBackgroundColor(self, cell, rgbColor):
 def canping_program(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
     df = df[['序号', '节目名称', '播出时间']]
-    inRow = df.shape[0] // 2 + 1
+    # 按序号排序
+    df = df.sort_values(by=['序号'], ascending=True)
+    df.reset_index(drop=True, inplace=True)
+    print(df)
+    # 计算节目分两列后所占行数
+    inRownumber = df.shape[0]
+    if inRownumber % 2 :
+        inRownumber += 1
+    inRow = inRownumber // 2
+
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
             if p.text == '一、参评节目':
                 print(p.text)
-                table = document.add_table(rows=inRow, cols=7, style='Table Grid')
+                # 因为表头占一行，所以行数inRow加1
+                table = document.add_table(rows=inRow + 1, cols=7, style='Table Grid')
                 move_table_after(table, p)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.cell(0, 3).merge(table.cell(inRow - 1, 3))
@@ -155,7 +165,6 @@ def canping_program(file='demo.docx'):
             shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
             cell1._tc.get_or_add_tcPr().append(shading_elm_1)
     # 让正确转行
-    inRow -= 1
     table.rows[0].height = Mm(7.2)  # 表头行高
     for index, row in df.iterrows():
         table.rows[index % inRow + 1].height = Mm(7.2)  # 数据行高
@@ -463,7 +472,7 @@ def fenxi_dabiao(file='demo.docx'):
     df['播出时间'] = df['播出时间'].apply(lambda x: x.strftime('%Y年%m月%d日'))
     # 按总分排序
     df = df.sort_values(by='总分', ascending=False)
-    df = df[df['总分'] < 80]
+    df = df[df['总分'] < 85]
     df.reset_index(drop=True, inplace=True)
 
     document = Document(file)
@@ -1692,13 +1701,13 @@ def Experts_zongping(file='demo.docx'):
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
     # 选择数据行
-    # df = df[df['等级'].isin(['优秀', '及格', '不及格'])]
-    temp1 = df[:11]
-    temp2 = df[-11:]
-    df = pd.concat([temp1, temp2])
+    df = df[df['等级'].isin(['优秀', '良', '及格', '不及格'])]
+    # temp1 = df[:11]
+    # temp2 = df[-11:]
+    # df = pd.concat([temp1, temp2])
     # df = df.sort_values(by='总分', ascending=False)
     df.reset_index(drop=True, inplace=True)
-
+    print(df)
     df = df[['序号', '节目名称', '频道', '播出时间', '录制地点',
              '制作方式', '制片人', '主观', '客观', '总分', '等级', '评语']]
     document = Document(file)
@@ -1782,7 +1791,7 @@ def Experts_zongping(file='demo.docx'):
     '''
     document.save(file)
 
-def write_to_Excel(file='database.xlsx', sheet_name='sheet1', start_row=0, start_col=0, df=pd.DataFrame[]):
+def write_to_Excel(file='database.xlsx', sheet_name='sheet1', start_row=0, start_col=0, df=pd.DataFrame):
     book = load_workbook(file)
     with pd.ExcelWriter(file,engine='openpyxl',datetime_format='%Y/%M/%D') as writer:
         writer.book = book
@@ -1791,16 +1800,16 @@ def write_to_Excel(file='database.xlsx', sheet_name='sheet1', start_row=0, start
         df.to_excel(writer, sheet_name, index=False, startrow=start_row, startcol=start_col)
 
 if __name__ == '__main__':
-    # initBaogao()
-    # fenxi_youxiu()
-    # fenxi_dabiao()
-    # canping_program()
-    # zonghe_fen()
-    # rank_pindao()
-    # fenxi_pindao()
-    # rank_didian()
-    # fenxi_didian()
-    # rank_fangshi()
-    # fenxi_fangshi()
-    # Experts_zongping()
+    initBaogao()
+    fenxi_youxiu()
+    fenxi_dabiao()
+    canping_program()
+    zonghe_fen()
+    rank_pindao()
+    fenxi_pindao()
+    rank_didian()
+    fenxi_didian()
+    rank_fangshi()
+    fenxi_fangshi()
+    Experts_zongping()
     
