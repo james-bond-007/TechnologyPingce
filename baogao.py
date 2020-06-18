@@ -1,7 +1,8 @@
 import xlsxwriter
 from docx import Document
 from docx.oxml import parse_xml
-from docx.shared import Inches, Pt, Mm
+from docx.shared import Inches, Pt, Mm, RGBColor
+from docx.dml.color import ColorFormat
 from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn, nsdecls
@@ -36,7 +37,7 @@ def initBaogao(file='./demo.docx'):
     sections = document.sections
     current_section = sections[-1]
     # 第一章
-    p = document.add_heading('第一章 本期评测综述', heading1)
+    p = document.add_heading('第一章 本期评测工作概述', heading1)
     '''
     p1 = document.add_paragraph()
     run = p1.add_run(u'第一章 本期评测综述')
@@ -49,13 +50,12 @@ def initBaogao(file='./demo.docx'):
     p.add_run('bold').bold = True
     p.add_run(' and some ')
     p.add_run('italic.').italic = True
-    heading_first = ['一、参评节目数量',
-                     '二、综合得分等级及占比',
-                     '三、技术质量优秀节目、不达标节目列表',
-                     '1、优秀节目',
-                     '2、不达标节目',
-                     '四、本期亮点',
-                     '五、本期报告用语说明', ]
+    heading_first = ['一、参评数量',
+                     '二、评测结果',
+                     '2、获优秀奖节目和不达标节目：',
+                     '3、以上评测结果将提交考核办，按相关文件要求，对节目考核和奖惩；并在OA网、北楼大屏公示两周。',
+                     '三、本期说明',
+                     '本期参评节目来源',]
     for heading in heading_first:
         head = document.add_heading(heading, heading2)
         # head.element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
@@ -77,26 +77,30 @@ def initBaogao(file='./demo.docx'):
     # 第二章
     # document.add_page_break()
     document.add_section()
-    document.add_heading('第二章 节目技术质量评测结果', heading1)
-    heading_first = ['一、参评节目',
-                     '二、综合得分排序', ]
+    document.add_heading('第二章 本期评测数据分析', heading1)
+    heading_first = ['一、按综合得分分析',
+                     '得分分析图',
+                     '综合得分排序表',
+                     '二、按首播频道分析',
+                     '首播频道分析表',
+                     '首播频道排序表',
+                     '三、按录制地点分析',
+                     '录制地点分析表',
+                     '录制地点排序表',
+                     '三、按制作方式分析',
+                     '制作方式分析表',
+                     '制作方式排序表',
+                     '专家意见及建议']
     for heading in heading_first:
         document.add_heading(heading, heading2)
         p = document.add_paragraph('please input some words.')
         p.paragraph_format.first_line_indent = Mm(7.4)
     # 第三章
+    # document.add_page_break()
     document.add_section()
-    document.add_heading('第三章  数据分析', heading1)
-    heading_first = ['一、按频道分析',
-                     '频道分析表',
-                     '频道分析图',
-                     '二、按录制地点分析',
-                     '录制地点分析表',
-                     '录制地点分析图',
-                     '三、按制作方式分析',
-                     '制作方式分析表',
-                     '制作方式分析图',
-                     '专家意见及建议']
+    document.add_heading('第三章 专家评语', heading1)
+    heading_first = ['一、优秀节目评语',
+                     '二、后十名节目评语',]
     for heading in heading_first:
         document.add_heading(heading, heading2)
         p = document.add_paragraph('please input some words.')
@@ -139,7 +143,7 @@ def canping_shuliang(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '一、参评节目数量':
+            if p.text == '一、参评数量':
                 print(p.text)
                 # 因为表头占一行，所以行数inRow加1
                 pNew = document.add_paragraph(myText)
@@ -166,7 +170,7 @@ def defen_dengji(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '二、综合得分等级及占比':
+            if p.text == '二、评测结果':
                 print(p.text)
                 # 因为表头占一行，所以行数inRow加1
                 pNew = document.add_paragraph(myText)
@@ -177,7 +181,7 @@ def defen_dengji(file='demo.docx'):
 
 def canping_program(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
-    df = df[['序号', '节目名称', '播出时间']]
+    df = df[['序号', '节目名称', '节目来源']]
     # 按序号排序
     df = df.sort_values(by=['序号'], ascending=True)
     df.reset_index(drop=True, inplace=True)
@@ -192,13 +196,13 @@ def canping_program(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '一、参评节目':
+            if p.text == '本期参评节目来源':
                 print(p.text)
                 # 因为表头占一行，所以行数inRow加1
                 table = document.add_table(rows=inRow + 1, cols=7, style='Table Grid')
                 move_table_after(table, p)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.cell(0, 3).merge(table.cell(inRow - 1, 3))
+    table.cell(0, 3).merge(table.cell(inRow, 3))
     table.autofit = False
     table.columns[0].width = Mm(12)
     table.columns[1].width = Mm(42)
@@ -215,8 +219,14 @@ def canping_program(file='demo.docx'):
             cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
             cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
             # 设置表头底色
-            shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
+            shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#FDEADA'))
             cell1._tc.get_or_add_tcPr().append(shading_elm_1)
+            # 设置字体大小
+            for run in cell1.paragraphs[0].runs:
+                font = run.font
+                font.size = Pt(12)
+                font.bold = True
+
     # 让正确转行
     table.rows[0].height = Mm(7.2)  # 表头行高
     for index, row in df.iterrows():
@@ -226,6 +236,10 @@ def canping_program(file='demo.docx'):
             cell1.text = str(row[columns[i]])
             cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
             cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            # 设置字体大小
+            for run in cell1.paragraphs[0].runs:
+                font = run.font
+                font.size = Pt(12)
 
     document.save(file)
 
@@ -355,7 +369,7 @@ def fenxi_zhanbi(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '二、综合得分等级及占比':
+            if p.text == '专家意见及建议':
                 print(p.text)
                 table = document.add_table(rows=df.shape[0] + 2, cols=df.shape[1], style='Table Grid')
                 move_table_after(table, p)
@@ -373,6 +387,7 @@ def fenxi_zhanbi(file='demo.docx'):
     for run in cell1.paragraphs[0].runs:
         font = run.font
         font.size = Pt(10)
+        font.bold = True
     cell1 = table.cell(0, 5).merge(table.cell(0, 6))
     cell1.text = '技术质量不达标'
     cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -384,6 +399,7 @@ def fenxi_zhanbi(file='demo.docx'):
     for run in cell1.paragraphs[0].runs:
         font = run.font
         font.size = Pt(10)
+        font.bold = True
     # 各列宽度
     table_width = {'频道': 10.9, '节目数量': 14, '优秀': 14, '良好': 14, '良': 14,
                    '及格': 16, '不及格': 16, '达标率%': 17, '优秀率%': 16, '平均分': 16}
@@ -400,6 +416,7 @@ def fenxi_zhanbi(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
 
     for index, row in df.iterrows():
         for i in range(len(row)):
@@ -449,20 +466,23 @@ def fenxi_zhanbi(file='demo.docx'):
 
 def fenxi_youxiu(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
-    df = df[['节目名称', '播出时间', '总分', '主观', '客观', '序号']]
-    df['播出时间'] = pd.to_datetime(df['播出时间'])
-    df['播出时间'] = df['播出时间'].apply(lambda x: x.strftime('%Y年%m月%d日'))
+    df = df[['等级', '排名', '节目名称', '播出时间', '总分', '主观', '客观', '序号']]
+    # df['播出时间'] = pd.to_datetime(df['播出时间'])
+    # df['播出时间'] = df['播出时间'].apply(lambda x: x.strftime('%Y年%m月%d日'))
     # 按总分、主观、客观，序号排序
     df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
-    df = df[['节目名称', '播出时间', '总分']]
-    df = df[df['总分'] >= 90]
+    df = df[['等级', '排名', '节目名称', '播出时间', '总分']]
+    df = df[(df['总分'] >= 90) | (df['总分'] < 85)]
     df.reset_index(drop=True, inplace=True)
+
+    # 修改列名
+    df.rename({'总分': '综合得分', }, axis='columns', inplace=True)
 
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '1、优秀节目':
+            if p.text == '2、获优秀奖节目和不达标节目：':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0] + 1, cols=df.shape[1], style='Table Grid')
@@ -472,8 +492,8 @@ def fenxi_youxiu(file='demo.docx'):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     # 各列宽度
-    table_width = {'排名': 7.4, '序号': 7.4, '节目名称': 50, '频道': 10.9, '播出时间': 33.2, '录制地点': 20.6,
-                   '制作方式': 18, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '总分': 11.3, '等级': 10.9}
+    table_width = {'排名': 17.7, '序号': 7.4, '节目名称': 43.2, '频道': 10.9, '播出时间': 39.2, '录制地点': 20.6,
+                   '制作方式': 18, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '综合得分': 21.7, '总分': 21.7, '等级': 19.5}
     # 取得各列名称
     columns_name = df.columns.to_list()
     for i in columns_name:
@@ -493,7 +513,8 @@ def fenxi_youxiu(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+            font.bold = True
     table.rows[0].height = Mm(7.5)  # 表头行高
     for index, row in df.iterrows():
         table.rows[index + 1].height = Mm(7.5)  # 数据行高
@@ -505,7 +526,7 @@ def fenxi_youxiu(file='demo.docx'):
             # 设置字体大小
             for run in cell1.paragraphs[0].runs:
                 font = run.font
-                font.size = Pt(10)
+                font.size = Pt(12)
     '''
     #设置表格宋体大小
     for row in table.rows:
@@ -567,6 +588,7 @@ def fenxi_dabiao(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
     table.rows[0].height = Mm(7.5)  # 表头行高
     for index, row in df.iterrows():
         table.rows[index + 1].height = Mm(7.5)  # 数据行高
@@ -598,21 +620,20 @@ def zonghe_fen(file='demo.docx'):
     df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
     df.reset_index(drop=True, inplace=True)
     df['排名'] = df.apply(lambda x: x.index + 1)
-
-    df = df[['排名', '序号', '节目名称', '频道', '播出时间', '录制地点',
-             '制作方式', '制片人', '主观', '客观', '总分', '等级']]
+    myColumnts = ['排名', '节目名称', '首播频道', '播出时间', '录制地点',
+             '制作方式', '制片人', '主观', '客观', '总分', '等级']
+    df = df[myColumnts]
     df['主观'] = df['主观'].round(0).astype(np.int64)
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
-    # 旧排序
-    # df = df.sort_values(by='总分', ascending=False)
-    # df.reset_index(drop=True, inplace=True)
+    # 总分变为综合
+    df.rename({'总分':'综合'}, axis='columns', inplace=True)
 
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '二、综合得分排序':
+            if p.text == '综合得分排序表':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0] + 1, cols=df.shape[1], style='Table Grid')
@@ -622,8 +643,8 @@ def zonghe_fen(file='demo.docx'):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     # 各列宽度
-    table_width = {'排名': 8.6, '序号': 8.6, '节目名称': 28, '频道': 11.2, '播出时间': 22.3, '录制地点': 20.9,
-                   '制作方式': 18.2, '制片人': 19.3, '主观': 8.1, '客观': 10.1, '总分': 8, '等级': 7}
+    table_width = {'排名': 9.5, '序号': 8.6, '节目名称': 28, '频道': 11.2, '首播频道': 19.2, '播出时间': 22.3, '录制地点': 20.9,
+                   '制作方式': 18.2, '制片人': 19.3, '主观': 8.1, '客观': 10.1, '总分': 8, '综合': 8, '等级': 7}
     # 取得各列名称
     columns_name = df.columns.to_list()
     for i in columns_name:
@@ -641,6 +662,7 @@ def zonghe_fen(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
         # 设置表头底色
         shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
         cell1._tc.get_or_add_tcPr().append(shading_elm_1)
@@ -665,8 +687,9 @@ def zonghe_fen(file='demo.docx'):
         if i in temp1:
             dengji.append(i)
     j = 1
+    inDengji = myColumnts.index('等级')  # 定位等级列的列数
     for i in dengji:
-        cell1 = table.cell(j, 11).merge(table.cell(j + temp[i] - 1, 11))
+        cell1 = table.cell(j, inDengji).merge(table.cell(j + temp[i] - 1, inDengji))
         cell1.text = i
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
@@ -694,13 +717,15 @@ def rank_pindao(file='demo.docx'):
     df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
     df.reset_index(drop=True, inplace=True)
 
-    df = df[['频道', '节目名称', '播出时间', '录制地点',
+    df = df[['首播频道', '节目名称', '播出时间', '录制地点',
              '制作方式', '制片人', '主观', '客观', '总分', '等级']]
     df['主观'] = df['主观'].round(0).astype(np.int64)
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
+    # 频道改名
+    df.rename({'首播频道': '频道', '总分': '综合'}, axis='columns', inplace=True)
 
-    pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
+    pindao = ['河北卫视', '河北经济', '河北都市', '河北影视', '河北少儿', '河北公共', '农民']
     result = {}
     for i in pindao:
         # 筛选出频道数据
@@ -710,7 +735,7 @@ def rank_pindao(file='demo.docx'):
         # 重新生成行索引
         # df_temp.reset_index(drop=True, inplace=True)
         # 插入 排名 列
-        df_temp.insert(1, '排名', df_temp['总分'].rank(ascending=False, method='first', ))
+        df_temp.insert(1, '排名', df_temp['综合'].rank(ascending=False, method='first', ))
         # 排名列改为int32
         df_temp['排名'] = df_temp['排名'].astype(np.int32)
         # 保存到字典中
@@ -723,7 +748,7 @@ def rank_pindao(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '一、按频道分析':
+            if p.text == '首播频道排序表':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0] + 1, cols=df.shape[1], style='Table Grid')
@@ -734,7 +759,7 @@ def rank_pindao(file='demo.docx'):
     table.autofit = False
     # 各列宽度
     table_width = {'排名': 9.1, '序号': 9.1, '节目名称': 29.6, '频道': 9.1, '播出时间': 23.6, '录制地点': 22.1,
-                   '制作方式': 19.2, '制片人': 20.4, '主观': 8.6, '客观': 10.7, '总分': 8.4, '等级': 11.6}
+                   '制作方式': 19.2, '制片人': 20.4, '主观': 8.6, '客观': 10.7, '总分': 8.4, '综合': 8.4, '等级': 11.6}
     # 取得各列名称
     columns_name = df.columns.to_list()
     for i in columns_name:
@@ -752,6 +777,7 @@ def rank_pindao(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
         # 设置表头底色
         shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
         cell1._tc.get_or_add_tcPr().append(shading_elm_1)
@@ -796,17 +822,17 @@ def rank_pindao(file='demo.docx'):
 
 def fenxi_pindao(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
-    df = df[['频道', '节目名称', '播出时间', '录制地点',
+    df = df[['首播频道', '节目名称', '播出时间', '录制地点',
              '制作方式', '制片人', '主观', '客观', '总分', '等级']]
     df['主观'] = df['主观'].round(0)
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
 
-    pindao = ['卫视', '经济', '都市', '影视', '少儿', '公共', '农民']
+    pindao = ['河北卫视', '河北经济', '河北都市', '河北影视', '河北少儿', '河北公共', '农民']
     fenxi = []
     for i in pindao:
         # 按频道筛选
-        df_temp = df[df['频道'] == i]
+        df_temp = df[df['首播频道'] == i]
         # 统计等级个数
         temp = df_temp.loc[:, '等级'].value_counts()
         # 用频道名称重新命名序列名
@@ -826,29 +852,29 @@ def fenxi_pindao(file='demo.docx'):
     # 无数据填充为0
     data.fillna(0, inplace=True)
     # 增加频道各节目数
-    temp = df.loc[:, '频道'].value_counts()
+    temp = df.loc[:, '首播频道'].value_counts()
     # 将频道各节目数合并
-    data.insert(0, '节目数量', temp)
+    data.insert(0, '测评节目数量', temp)
     # 添加无数据列
     s = data.columns.to_list()
-    dengji = ['节目数量', '优秀', '良好', '良', '及格', '不及格', '平均分', '最高分', '最低分']
+    dengji = ['测评节目数量', '优秀', '良好', '良', '及格', '不及格', '平均分', '最高分', '最低分']
     for i in dengji:
         if i in s:
             pass
         else:
             data[i] = 0
     data = data[dengji]
-    data.insert(6, '优秀率', data[['节目数量', '优秀']].apply(lambda x: x['优秀'] / x['节目数量'], axis=1))
-    data.insert(6, '达标率', data[['节目数量', '优秀', '良好', '良']].apply(
-        lambda x: (x['优秀'] + x["良好"] + x['良']) / x['节目数量'], axis=1))
+    data.insert(6, '优秀率', data[['测评节目数量', '优秀']].apply(lambda x: x['优秀'] / x['测评节目数量'], axis=1))
+    data.insert(6, '达标率', data[['测评节目数量', '优秀', '良好', '良']].apply(
+        lambda x: (x['优秀'] + x["良好"] + x['良']) / x['测评节目数量'], axis=1))
     # 数据类型
-    dengji = ['节目数量', '优秀', '良好', '良', '及格', '不及格', '最高分', '最低分']
+    dengji = ['测评节目数量', '优秀', '良好', '良', '及格', '不及格', '最高分', '最低分']
     data[dengji] = data[dengji].astype(np.int64)
     data['平均分'] = data['平均分'].round(2)
     data['达标率%'] = data['达标率'].apply(lambda x: format(x, '.2%'))
     data['优秀率%'] = data['优秀率'].apply(lambda x: format(x, '.2%'))
     data.reset_index(inplace=True)
-    data = data.rename({'index': '频道'}, axis='columns')
+    data = data.rename({'index': '首播频道'}, axis='columns')
     # print(data)
     # data.insert(0, '频道', pindao)
     # data.reset_index(drop=True,inplace=True)
@@ -864,7 +890,7 @@ def fenxi_pindao(file='demo.docx'):
         for i in souce:
             souce[i].to_excel(writer, sheet_name=i, index=False)
         data.to_excel(writer, sheet_name=new_sheet, index=False)
-        data[['频道', '达标率%', '优秀率%']].to_excel(writer, sheet_name='按频道分', startrow=data.shape[0] + 3, index=False)
+        data[['首播频道', '达标率%', '优秀率%']].to_excel(writer, sheet_name='按频道分', startrow=data.shape[0] + 3, index=False)
         workbook = writer.book
         worksheet = writer.sheets[new_sheet]
         chart = workbook.add_chart({'type': 'column'})
@@ -886,7 +912,7 @@ def fenxi_pindao(file='demo.docx'):
         chart.width = 960
         worksheet.insert_chart('D2', chart, {'x_offset': 25, 'y_offset': 10})
 
-        data[['频道', '最高分', '最低分', '平均分']].to_excel(writer, sheet_name='按频道分',
+        data[['首播频道', '最高分', '最低分', '平均分']].to_excel(writer, sheet_name='按频道分',
                                                    startrow=(data.shape[0] + 3) * 2, index=False)
         chart = workbook.add_chart({'type': 'line'})
         chart.add_series({
@@ -912,20 +938,23 @@ def fenxi_pindao(file='demo.docx'):
         chart.width = 960
         worksheet.insert_chart('D38', chart, {'x_offset': 25, 'y_offset': 10})
     # 表格数据写入报告docx
-    dengji = ['频道', '节目数量', '优秀', '良好', '良', '及格', '不及格', '达标率%', '优秀率%', '平均分']
+    dengji = ['首播频道', '测评节目数量', '优秀', '良好', '良', '及格', '不及格', '达标率%', '优秀率%', '平均分']
     df = data[dengji]
     print(df)
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '频道分析表':
+            if p.text == '首播频道分析表':
                 print(p.text)
                 table = document.add_table(rows=df.shape[0] + 2, cols=df.shape[1], style='Table Grid')
                 move_table_after(table, p)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     # 表头
+    # 表格行高
+    for i in range(df.shape[0] + 2):
+        table.rows[i].height = Mm(10)
     # 合并表头单元格
     for i in [0, 1, 7, 8, 9]:
         table.cell(0, i).merge(table.cell(1, i))
@@ -939,7 +968,8 @@ def fenxi_pindao(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     cell1 = table.cell(0, 5).merge(table.cell(0, 6))
     cell1.text = '技术质量不达标'
     cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -950,10 +980,11 @@ def fenxi_pindao(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     # 各列宽度
-    table_width = {'频道': 10.9, '节目数量': 14, '优秀': 14, '良好': 14, '良': 14,
-                   '及格': 16, '不及格': 16, '达标率%': 17, '优秀率%': 17, '平均分': 16}
+    table_width = {'频道': 10.9, '首播频道': 22, '测评节目数量': 14, '优秀': 13, '良好': 13, '良': 13,
+                   '及格': 16, '不及格': 19, '达标率%': 22, '优秀率%': 22, '平均分': 19}
     table_colors = ['#8DB3E2', '#8DB3E2', '#3AA315', '#9BBB59', '#943634', '#C0504D', '#D8D8D8',
                     '#C6D9F1', '#C6D9F1', '#C6D9F1']
     # 取得各列名称
@@ -962,7 +993,10 @@ def fenxi_pindao(file='demo.docx'):
         # 设置表格列宽
         table.columns[columns_name.index(i)].width = Mm(table_width[i])
         cell1 = table.cell(1, columns_name.index(i))
-        cell1.text = i
+        if i in ['优秀率%', '达标率%']:
+            cell1.text = i[:-1]
+        else:
+            cell1.text = i
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         # 设置标题颜色
@@ -972,7 +1006,10 @@ def fenxi_pindao(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+            font.bold = True
+            if i in ['优秀', '良好', '良', '及格']:
+                font.color.rgb = RGBColor(0xff, 0xff, 0xff)
 
     for index, row in df.iterrows():
         for i in range(len(row)):
@@ -983,7 +1020,7 @@ def fenxi_pindao(file='demo.docx'):
             # 设置字体大小
             for run in cell1.paragraphs[0].runs:
                 font = run.font
-                font.size = Pt(10)
+                font.size = Pt(12)
     '''
     # make picture
     dengji = ['达标率', '优秀率']
@@ -1054,7 +1091,7 @@ def rank_didian(file='demo.docx'):
     df = pd.concat(result)
     df.reset_index(drop=True, inplace=True)
     # 选择要展示字段
-    df = df[['地点', '录制地点', '节目名称', '频道', '总分', '等级']]
+    df = df[['地点', '录制地点', '节目名称', '首播频道', '总分', '等级']]
     # df['主观'] = df['主观'].round(0).astype(np.int64)
     # df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
@@ -1063,7 +1100,7 @@ def rank_didian(file='demo.docx'):
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '二、按录制地点分析':
+            if p.text == '录制地点排序表':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0] + 1, cols=df.shape[1], style='Table Grid')
@@ -1072,9 +1109,11 @@ def rank_didian(file='demo.docx'):
     # 设置表格居中
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
+    # 列名改表头名
+    df.rename({'等级': '测评等级', '总分': '综合得分'}, axis='columns', inplace=True)
     # 各列宽度
-    table_width = {'地点': 20.6, '频道': 7.4, '节目名称': 60, '频道': 10.9, '播出时间': 21.5, '录制地点': 23.5,
-                   '制作方式': 18, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '总分': 10.9, '等级': 10.9}
+    table_width = {'地点': 20.6, '频道': 7.4, '节目名称': 42.7, '首播频道': 24.7, '播出时间': 21.5, '录制地点': 23.5,
+                   '制作方式': 18, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '综合得分': 20.4, '测评等级': 19.3}
     # 取得各列名称
     columns_name = df.columns.to_list()
     for i in columns_name:
@@ -1083,7 +1122,12 @@ def rank_didian(file='demo.docx'):
         # 取得表格单元格
         cell1 = table.cell(0, columns_name.index(i))
         # 写入列名称
-        cell1.text = i
+        if i == '地点':
+            cell1.text = '形式'
+        elif i == '录制地点':
+            cell1.text = '录制方式'
+        else:
+            cell1.text = i
         # 设置居中
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         # 设置垂直居中
@@ -1092,6 +1136,7 @@ def rank_didian(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
         # 设置表头底色
         shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
         cell1._tc.get_or_add_tcPr().append(shading_elm_1)
@@ -1210,7 +1255,7 @@ def fenxi_didian(file='demo.docx'):
             pass
         else:
             data[i] = 0
-    data = data[dengji]
+    data = data[dengji].copy()
     data.insert(6, '优秀率', data[['节目数量', '优秀']].apply(lambda x: x['优秀'] / x['节目数量'], axis=1))
     data.insert(6, '达标率', data[['节目数量', '优秀', '良好', '良']].apply(
         lambda x: (x['优秀'] + x["良好"] + x['良']) / x['节目数量'], axis=1))
@@ -1270,6 +1315,7 @@ def fenxi_didian(file='demo.docx'):
     # 表格数据写入报告docx
     dengji = ['地点', '节目数量', '优秀', '良好', '良', '及格', '不及格', '达标率%', '优秀率%', ]
     df = data[dengji]
+
     print(df)
     document = Document(file)
     # 将表格插入指定位置
@@ -1282,6 +1328,10 @@ def fenxi_didian(file='demo.docx'):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     # 表头
+    df.rename({'节目数量': '测评节目数量', '地点': '录制部门'}, axis='columns', inplace=True)
+    # 表格行高
+    for i in range(df.shape[0] + 2):
+        table.rows[i].height = Mm(10)
     # 合并表头单元格
     for i in [0, 1, 7, 8]:
         table.cell(0, i).merge(table.cell(1, i))
@@ -1295,7 +1345,8 @@ def fenxi_didian(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     cell1 = table.cell(0, 5).merge(table.cell(0, 6))
     cell1.text = '技术质量不达标'
     cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1306,10 +1357,11 @@ def fenxi_didian(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     # 各列宽度
-    table_width = {'地点': 20.8, '节目数量': 14, '优秀': 14, '良好': 14, '良': 14,
-                   '及格': 16, '不及格': 16, '达标率%': 19, '优秀率%': 19, '平均分': 16}
+    table_width = {'录制部门': 25.3, '测评节目数量': 14, '优秀': 13, '良好': 13, '良': 13,
+                   '及格': 16, '不及格': 19, '达标率%': 22, '优秀率%': 22, '平均分': 19}
     table_colors = ['#8DB3E2', '#8DB3E2', '#3AA315', '#9BBB59', '#943634', '#C0504D', '#D8D8D8',
                     '#C6D9F1', '#C6D9F1', '#C6D9F1']
     # 取得各列名称
@@ -1318,7 +1370,10 @@ def fenxi_didian(file='demo.docx'):
         # 设置表格列宽
         table.columns[columns_name.index(i)].width = Mm(table_width[i])
         cell1 = table.cell(1, columns_name.index(i))
-        cell1.text = i
+        if i in ['优秀率%', '达标率%']:
+            cell1.text = i[:-1]
+        else:
+            cell1.text = i
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         # 设置标题颜色
@@ -1328,7 +1383,10 @@ def fenxi_didian(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+            font.bold = True
+            if i in ['优秀', '良好', '良', '及格']:
+                font.color.rgb = RGBColor(0xff, 0xff, 0xff)
 
     for index, row in df.iterrows():
         for i in range(len(row)):
@@ -1339,7 +1397,9 @@ def fenxi_didian(file='demo.docx'):
             # 设置字体大小
             for run in cell1.paragraphs[0].runs:
                 font = run.font
-                font.size = Pt(10)
+                font.size = Pt(12)
+                if index in [0, 1, 2, 3]:
+                    font.bold = True
     '''
     # make picture
     dengji = ['达标率', '优秀率']
@@ -1415,12 +1475,12 @@ def rank_fangshi(file='demo.docx'):
     df = pd.concat(result)
     df.reset_index(drop=True, inplace=True)
     # 选择展示字段
-    df = df[['方式', '制作方式', '节目名称', '频道', '总分', '等级']]
+    df = df[['方式', '制作方式', '节目名称', '首播频道', '总分', '等级']]
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '三、按制作方式分析':
+            if p.text == '制作方式排序表':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0] + 1, cols=df.shape[1], style='Table Grid')
@@ -1429,9 +1489,11 @@ def rank_fangshi(file='demo.docx'):
     # 设置表格居中
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
+    # 列名改表头名
+    df.rename({'等级': '测评等级', '总分': '综合得分'}, axis='columns', inplace=True)
     # 各列宽度
-    table_width = {'方式': 20.6, '节目名称': 60, '频道': 10.9, '播出时间': 21.5, '录制地点': 23.5,
-                   '制作方式': 20, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '总分': 10.9, '等级': 10.9}
+    table_width = {'方式': 20.6, '节目名称': 47.7, '首播频道': 23.2, '播出时间': 21.5, '录制地点': 23.5,
+                   '制作方式': 20, '制片人': 14.4, '主观': 7.4, '客观': 9.1, '综合得分': 18.9, '测评等级': 23.7}
     # 取得各列名称
     columns_name = df.columns.to_list()
     for i in columns_name:
@@ -1440,7 +1502,11 @@ def rank_fangshi(file='demo.docx'):
         # 取得表格单元格
         cell1 = table.cell(0, columns_name.index(i))
         # 写入列名称
-        cell1.text = i
+        # 写入列名称
+        if i == '方式':
+            cell1.text = '形式'
+        else:
+            cell1.text = i
         # 设置居中
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         # 设置垂直居中
@@ -1452,6 +1518,7 @@ def rank_fangshi(file='demo.docx'):
         for run in cell1.paragraphs[0].runs:
             font = run.font
             font.size = Pt(10)
+            font.bold = True
 
     # 写入数据
     table.rows[0].height = Mm(7.5)  # 表头行高
@@ -1653,6 +1720,10 @@ def fenxi_fangshi(file='demo.docx'):
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
     # 表头
+    df.rename({'节目数量': '测评节目数量', '方式': '制作地点'}, axis='columns', inplace=True)
+    # 表格行高
+    for i in range(df.shape[0] + 2):
+        table.rows[i].height = Mm(10)
     # 合并表头单元格
     for i in [0, 1, 7, 8, 9]:
         table.cell(0, i).merge(table.cell(1, i))
@@ -1666,7 +1737,8 @@ def fenxi_fangshi(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     cell1 = table.cell(0, 5).merge(table.cell(0, 6))
     cell1.text = '技术质量不达标'
     cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1677,10 +1749,11 @@ def fenxi_fangshi(file='demo.docx'):
     # 设置字体大小
     for run in cell1.paragraphs[0].runs:
         font = run.font
-        font.size = Pt(10)
+        font.size = Pt(12)
+        font.bold = True
     # 各列宽度
-    table_width = {'方式': 20.8, '节目数量': 14, '优秀': 14, '良好': 14, '良': 14,
-                   '及格': 16, '不及格': 16, '达标率%': 17, '优秀率%': 17, '平均分': 16}
+    table_width = {'制作地点': 21.4, '测评节目数量': 14, '优秀': 13, '良好': 13, '良': 13,
+                   '及格': 16, '不及格': 19, '达标率%': 22, '优秀率%': 22, '平均分': 19}
     table_colors = ['#8DB3E2', '#8DB3E2', '#3AA315', '#9BBB59', '#943634', '#C0504D', '#D8D8D8',
                     '#C6D9F1', '#C6D9F1', '#C6D9F1']
     # 取得各列名称
@@ -1689,7 +1762,10 @@ def fenxi_fangshi(file='demo.docx'):
         # 设置表格列宽
         table.columns[columns_name.index(i)].width = Mm(table_width[i])
         cell1 = table.cell(1, columns_name.index(i))
-        cell1.text = i
+        if i in ['优秀率%', '达标率%']:
+            cell1.text = i[:-1]
+        else:
+            cell1.text = i
         cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         # 设置标题颜色
@@ -1699,7 +1775,10 @@ def fenxi_fangshi(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+            font.bold = True
+            if i in ['优秀', '良好', '良', '及格']:
+                font.color.rgb = RGBColor(0xff, 0xff, 0xff)
 
     for index, row in df.iterrows():
         for i in range(len(row)):
@@ -1710,7 +1789,9 @@ def fenxi_fangshi(file='demo.docx'):
             # 设置字体大小
             for run in cell1.paragraphs[0].runs:
                 font = run.font
-                font.size = Pt(10)
+                font.size = Pt(12)
+                if index in [0, 3]:
+                    font.bold = True
     '''
     # make picture
     dengji = ['达标率', '优秀率']
@@ -1747,7 +1828,7 @@ def fenxi_fangshi(file='demo.docx'):
     document.save(file)
 
 
-def Experts_zongping(file='demo.docx'):
+def Experts_zongping_youxiu(file='demo.docx'):
     df = pd.read_excel('database.xlsx')
     # 按总分排序
     df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
@@ -1757,20 +1838,21 @@ def Experts_zongping(file='demo.docx'):
     df['客观'] = df['客观'].astype(np.int64)
     df['总分'] = df['总分'].astype(np.int64)
     # 选择数据行
-    df = df[df['等级'].isin(['优秀', '良', '及格', '不及格'])]
+    df = df[df['等级'].isin(['优秀'])]
     # temp1 = df[:11]
     # temp2 = df[-11:]
     # df = pd.concat([temp1, temp2])
     # df = df.sort_values(by='总分', ascending=False)
     df.reset_index(drop=True, inplace=True)
     print(df)
-    df = df[['序号', '节目名称', '频道', '播出时间', '录制地点',
-             '制作方式', '制片人', '主观', '客观', '总分', '等级', '评语']]
+    df = df[['排名', '节目名称', '首播频道', '播出时间',
+             '制片人', '主观', '客观', '总分', '等级', '评语']]
+    df.rename({'总分': '综合'}, axis='columns', inplace=True)
     document = Document(file)
     # 将表格插入指定位置
     for p in document.paragraphs:
         if re.match("^Heading \d+$", p.style.name):
-            if p.text == '专家意见及建议':
+            if p.text == '一、优秀节目评语':
                 print(p.text)
                 # 插入表格
                 table = document.add_table(rows=df.shape[0]*4+1, cols=df.shape[1]-1, style='Table Grid')
@@ -1781,8 +1863,8 @@ def Experts_zongping(file='demo.docx'):
     table.autofit = False
 
     # 各列宽度
-    table_width = {'序号': 8.5, '节目名称': 30, '频道': 20, '播出时间': 23.8, '录制地点': 21.6,
-                   '制作方式': 18, '制片人': 15.8, '主观': 8.9, '客观': 9.7, '总分': 9.7, '等级': 12.3}
+    table_width = {'排名': 12.5, '节目名称': 33.2, '首播频道': 21.1, '播出时间': 26.5, '录制地点': 21.6,
+                   '制作方式': 18, '制片人': 18.3, '主观': 12.7, '客观': 12.7, '综合': 12.7, '等级': 13.3}
     # 取得各列名称
     columns_name = df.columns.to_list()
     columns_name.pop(columns_name.index('评语'))
@@ -1803,13 +1885,15 @@ def Experts_zongping(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+            font.bold = True
     # 写入数据
-    table.rows[0].height = Mm(7.5)  # 表头行高
+    table.rows[0].height = Mm(12.5)  # 表头行高
     for index, row in df.iterrows():
         for j in range(1):
             table.rows[index*4+j+1].height = Mm(7.5)  # 数据行高
-            print(index*4+j+1)
+            # print(index*4+j+1)
+            print(index+1, str(row['节目名称']))
         for i in range(len(row)-1):
             # 写入节目数据
             cell1 = table.cell(index * 4 + 1, i)
@@ -1819,7 +1903,7 @@ def Experts_zongping(file='demo.docx'):
             # 设置字体大小
             for run in cell1.paragraphs[0].runs:
                 font = run.font
-                font.size = Pt(10)
+                font.size = Pt(12)
         # 合并序号单元格
         cell1 = table.cell(index * 4 + 1, 0).merge(table.cell(index * 4 + 4, 0))
         # cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1833,7 +1917,110 @@ def Experts_zongping(file='demo.docx'):
         # 设置字体大小
         for run in cell1.paragraphs[0].runs:
             font = run.font
-            font.size = Pt(10)
+            font.size = Pt(12)
+
+    '''
+    #设置表格宋体大小
+    for row in table.rows:
+        for cell in row.cells:
+            paragraphs = cell.paragraphs
+            for paragraph in paragraphs:
+                for run in paragraph.runs:
+                    font = run.font
+                    font.size = Pt(10)
+    '''
+    document.save(file)
+
+def Experts_zongping_backten(file='demo.docx'):
+    df = pd.read_excel('database.xlsx')
+    # 按总分排序
+    df = df.sort_values(by=['总分', '主观', '客观', '序号'], ascending=[False, False, False, True])
+    df.reset_index(drop=True, inplace=True)
+
+    df['主观'] = df['主观'].round(0).astype(np.int64)
+    df['客观'] = df['客观'].astype(np.int64)
+    df['总分'] = df['总分'].astype(np.int64)
+    # 选择数据行
+    df = df[df['等级'].isin(['良', '及格', '不及格'])]
+    # temp1 = df[:11]
+    # temp2 = df[-11:]
+    # df = pd.concat([temp1, temp2])
+    # df = df.sort_values(by='总分', ascending=False)
+    df.reset_index(drop=True, inplace=True)
+    print(df)
+    df = df[['排名', '节目名称', '首播频道', '播出时间',
+             '制片人', '主观', '客观', '总分', '等级', '评语']]
+    df.rename({'总分': '综合'}, axis='columns', inplace=True)
+    document = Document(file)
+    # 将表格插入指定位置
+    for p in document.paragraphs:
+        if re.match("^Heading \d+$", p.style.name):
+            if p.text == '二、后十名节目评语':
+                print(p.text)
+                # 插入表格
+                table = document.add_table(rows=df.shape[0]*4+1, cols=df.shape[1]-1, style='Table Grid')
+                # 移动表格到指定位置
+                move_table_after(table, p)
+    # 设置表格居中
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = False
+
+    # 各列宽度
+    table_width = {'排名': 12.5, '节目名称': 33.2, '首播频道': 21.1, '播出时间': 26.5, '录制地点': 21.6,
+                   '制作方式': 18, '制片人': 18.3, '主观': 12.7, '客观': 12.7, '综合': 12.7, '等级': 13.3}
+    # 取得各列名称
+    columns_name = df.columns.to_list()
+    columns_name.pop(columns_name.index('评语'))
+    for i in columns_name:
+        # 设置表格列宽
+        table.columns[columns_name.index(i)].width = Mm(table_width[i])
+        # 取得表格单元格
+        cell1 = table.cell(0, columns_name.index(i))
+        # 写入列名称
+        cell1.text = i
+        # 设置居中
+        cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        # 设置垂直居中
+        cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        # 设置表头底色
+        shading_elm_1 = parse_xml(r'<w:shd {} w:fill="{color_value}"/>'.format(nsdecls('w'), color_value='#8DB4E2'))
+        cell1._tc.get_or_add_tcPr().append(shading_elm_1)
+        # 设置字体大小
+        for run in cell1.paragraphs[0].runs:
+            font = run.font
+            font.size = Pt(12)
+            font.bold = True
+    # 写入数据
+    table.rows[0].height = Mm(12.5)  # 表头行高
+    for index, row in df.iterrows():
+        for j in range(1):
+            table.rows[index*4+j+1].height = Mm(7.5)  # 数据行高
+            # print(index*4+j+1)
+            print(index+1, str(row['节目名称']))
+        for i in range(len(row)-1):
+            # 写入节目数据
+            cell1 = table.cell(index * 4 + 1, i)
+            cell1.text = str(row[columns_name[i]])
+            cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            # 设置字体大小
+            for run in cell1.paragraphs[0].runs:
+                font = run.font
+                font.size = Pt(12)
+        # 合并序号单元格
+        cell1 = table.cell(index * 4 + 1, 0).merge(table.cell(index * 4 + 4, 0))
+        # cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        # cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        # 合并评语单元格
+        cell1 = table.cell(index * 4 + 2, 1).merge(table.cell(index * 4 + 4, len(row) - 2))
+        # cell1.paragraphs[0].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cell1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        cell1.text = df.loc[index, '评语']
+        cell1.paragraphs[0].paragraph_format.first_line_indent = Mm(7.4)
+        # 设置字体大小
+        for run in cell1.paragraphs[0].runs:
+            font = run.font
+            font.size = Pt(12)
 
     '''
     #设置表格宋体大小
@@ -1849,7 +2036,7 @@ def Experts_zongping(file='demo.docx'):
 
 def write_to_Excel(file='database.xlsx', sheet_name='sheet1', start_row=0, start_col=0, df=pd.DataFrame):
     book = load_workbook(file)
-    with pd.ExcelWriter(file,engine='openpyxl',datetime_format='%Y/%M/%D') as writer:
+    with pd.ExcelWriter(file, engine='openpyxl', datetime_format='%Y/%M/%D') as writer:
         writer.book = book
         writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
 
@@ -1859,15 +2046,17 @@ if __name__ == '__main__':
     initBaogao()
     canping_shuliang()
     defen_dengji()
-    # fenxi_youxiu()
-    # fenxi_dabiao()
-    # canping_program()
-    # zonghe_fen()
-    # rank_pindao()
-    # fenxi_pindao()
-    # rank_didian()
-    # fenxi_didian()
-    # rank_fangshi()
-    # fenxi_fangshi()
-    # Experts_zongping()
+    fenxi_youxiu()
+    # fenxi_dabiao
+    canping_program()
+    zonghe_fen()
+    rank_pindao()
+    fenxi_pindao()
+    rank_didian()
+    fenxi_didian()
+    rank_fangshi()
+    fenxi_fangshi()
+    Experts_zongping_youxiu()
+    Experts_zongping_backten()
+
     
