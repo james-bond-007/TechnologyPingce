@@ -852,6 +852,23 @@ def jisuanfen(file='总分统计表.xlsx'):
 def database(file='database.xlsx'):
     df1 = pd.read_excel('freeze.xlsx', sheet_name='常规', parse_dates=['播出时间'])
     df1['播出时间'] = df1['播出时间'].dt.strftime('%Y/%m/%d')
+
+    df1.insert(3, '首播频道', df1['频道'])
+    # 替换频道名称
+    pindao = {'卫视': '河北卫视', '经济': '河北经济', '都市': '河北都市', '影视': '河北影视', '少儿': '河北少儿', '公共': '河北公共'}
+    df1['首播频道'].replace(pindao, inplace=True)
+
+    df1.insert(8, '节目来源', df1['来源'])
+    # 替换来源
+    laiyuan = {'硬盘': '备播系统', '自送1': '大洋技审'}
+    df1['节目来源'].replace(laiyuan, inplace=True)
+    # 替换磁带库
+    bool = df1['节目来源'].str.contains('P')
+    filter_data = df1['节目来源'][bool]
+    # print(filter_data.to_list())
+    df1['节目来源'].replace(filter_data.to_list(), '磁带库', inplace=True)
+    # print(df1['来源'])
+
     # print(df1.info())
     df2 = pd.read_excel('总分统计表.xlsx', sheet_name='排序', header=1)
     # df2 = df2[['节目名称', '主观分', '客观分', '总分']]
